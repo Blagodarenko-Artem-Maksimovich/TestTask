@@ -8,18 +8,20 @@
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UInteractableInterface : public UInterface
+class UInteractable : public UInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 };
 
 /**
- * 
+ * Interface for interactable objects
  */
-class TESTTASK_API IInteractableInterface
+class TESTTASK_API IInteractable
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+    // Interaction function
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+    void Interact();
 };

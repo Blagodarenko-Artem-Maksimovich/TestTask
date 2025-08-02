@@ -143,17 +143,27 @@ void ATestTaskCharacter::Interact(const FInputActionValue& Value)
 	// Draw debug line for visibility
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.0f, 0, 2.0f);
 
-	FHitResult HitResult;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
+	FHitResult Hit;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
 
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
-	{
-		AInteractiveObject* HitObject = Cast<AInteractiveObject>(HitResult.GetActor());
-		if (HitObject)
+    bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
+
+    if (bHit)
+    {
+        DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.0f, 0, 2.0f);
+
+        // check interface
+        AActor* HitActor = Hit.GetActor();
+		if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 		{
-			HitObject->Interact();
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interacted with object!"));
+			IInteractable::Execute_Interact(HitActor);
 		}
-	}
+
+    }
+    else
+    {
+        DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f, 0, 2.0f);
+        UE_LOG(LogTemp, Warning, TEXT("Line trace did not hit anything."));
+    }
 }

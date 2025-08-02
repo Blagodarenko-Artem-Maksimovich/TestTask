@@ -9,6 +9,9 @@ AInteractiveObject::AInteractiveObject()
 
     // Установка начальных значений
     ObjectData = FObjectData();
+
+    ActiveMaterial = nullptr;
+    InactiveMaterial = nullptr;
 }
 
 void AInteractiveObject::BeginPlay()
@@ -23,12 +26,22 @@ void AInteractiveObject::BeginPlay()
     }
 }
 
-void AInteractiveObject::Interact()
+void AInteractiveObject::Interact_Implementation()
 {
-    if (ObjectData.bIsActive)
+    ObjectData.bIsActive = !ObjectData.bIsActive;
+
+    // Set material
+    if (MeshComponent)
     {
-        // Реализация взаимодействия
-        // Например, вывод сообщения
-        UE_LOG(LogTemp, Warning, TEXT("Взаимодействие с объектом: %s"), *ObjectData.Name);
+        if (ObjectData.bIsActive && ActiveMaterial)
+        {
+            MeshComponent->SetMaterial(0, ActiveMaterial);
+            ObjectData.ColorName= ActiveMaterial->GetName();
+        }
+        else if (!ObjectData.bIsActive && InactiveMaterial)
+        {
+            MeshComponent->SetMaterial(0, InactiveMaterial);
+            ObjectData.ColorName = InactiveMaterial->GetName();
+        }
     }
 }

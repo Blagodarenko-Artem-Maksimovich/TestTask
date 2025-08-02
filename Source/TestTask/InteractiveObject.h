@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ObjectData.h"
+#include "InteractableInterface.h"
 #include "InteractiveObject.generated.h"
 
 UCLASS()
-class TESTTASK_API AInteractiveObject : public AActor
+class TESTTASK_API AInteractiveObject : public AActor, public IInteractable
 {
     GENERATED_BODY()
 
@@ -20,9 +21,17 @@ public:
     UPROPERTY(VisibleAnywhere)
     class UStaticMeshComponent* MeshComponent;
 
+    // Materials
+    UPROPERTY(EditDefaultsOnly, Category = "Materials")
+    UMaterialInterface* ActiveMaterial;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Materials")
+    UMaterialInterface* InactiveMaterial;
+
+
     AInteractiveObject();
 
-    void Interact();
+    virtual void Interact_Implementation();
 
 protected:
     virtual void BeginPlay() override;
