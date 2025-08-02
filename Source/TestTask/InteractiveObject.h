@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "ObjectData.h"
 #include "InteractableInterface.h"
+#include "GS_GameStateBase.h"
 #include "InteractiveObject.generated.h"
 
 UCLASS()
@@ -28,6 +29,8 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Materials")
     UMaterialInterface* InactiveMaterial;
 
+    UPROPERTY()
+    AGS_GameStateBase* GameState = nullptr;
 
     AInteractiveObject();
 

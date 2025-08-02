@@ -18,11 +18,13 @@ void AInteractiveObject::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Инициализация данных
-    if (ObjectData.bIsActive)
+    if (GetWorld())
     {
-        // Применение данных к объекту
-        // Например, установка цвета или позиции
+        GameState = GetWorld()->GetGameState<AGS_GameStateBase>();
+        if (GameState)
+        {
+            GameState->RegisterObject(ObjectData);
+        }
     }
 }
 
@@ -43,5 +45,7 @@ void AInteractiveObject::Interact_Implementation()
             MeshComponent->SetMaterial(0, InactiveMaterial);
             ObjectData.ColorName = InactiveMaterial->GetName();
         }
+
+        GameState->UpdateObjectData(ObjectData);
     }
 }

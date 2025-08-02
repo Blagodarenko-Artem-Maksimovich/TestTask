@@ -2,6 +2,7 @@
 
 #include "TestTaskGameMode.h"
 #include "TestTaskCharacter.h"
+#include "GS_GameStateBase.h"
 #include "UObject/ConstructorHelpers.h"
 
 ATestTaskGameMode::ATestTaskGameMode()
@@ -11,5 +12,6 @@ ATestTaskGameMode::ATestTaskGameMode()
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
+		GameStateClass = AGS_GameStateBase::StaticClass();
 	}
 }
