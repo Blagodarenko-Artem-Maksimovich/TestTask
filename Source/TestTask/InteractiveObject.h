@@ -32,10 +32,17 @@ public:
     UPROPERTY()
     AGS_GameStateBase* GameState = nullptr;
 
+    UFUNCTION(BlueprintCallable)
+    bool InitFromData(const FObjectData& InData);
+
     AInteractiveObject();
 
     virtual void Interact_Implementation();
 
 protected:
     virtual void BeginPlay() override;
+
+private:
+    TMap<FString, UStaticMesh*> NameToMeshMap ;
+
 };

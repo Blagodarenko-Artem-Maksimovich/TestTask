@@ -18,6 +18,8 @@ class TESTTASK_API AGS_GameStateBase : public AGameStateBase
 	GENERATED_BODY()
 	
 public:
+
+
     // Добавить объект
     void RegisterObject(FObjectData& ObjectData);
 
@@ -27,10 +29,18 @@ public:
     // Обновить данные по ID
     void UpdateObjectData(const FObjectData& NewData);
 
+    UFUNCTION(BlueprintCallable)
+    void LoadObjectsFromJson();
+
     UPROPERTY(BlueprintAssignable )
     FOnObjectsUpdated OnObjectsUpdated;
 
+    UFUNCTION(BlueprintCallable, Category = "Save?Load")
+    void SaveObjectsToJson();
+
 protected:
+    virtual void BeginPlay() override;
+
     // Все данные объектов
     UPROPERTY(VisibleAnywhere)
     TArray<FObjectData> ObjectDataArray;

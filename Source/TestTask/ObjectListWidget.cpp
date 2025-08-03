@@ -8,19 +8,17 @@
 #include "Components/Button.h"
 #include "Blueprint/WidgetTree.h"
 #include "Kismet/GameplayStatics.h"
-#include "GS_GameStateBase.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "TestTaskGameMode.h"
 
 void UObjectListWidget::InitializeWidget()
 {
-    if (AGS_GameStateBase* GS = GetWorld()->GetGameState<AGS_GameStateBase>())
-    {
-        // Правильная подписка: AddUniqueDynamic, не AddUObject
-        GS->OnObjectsUpdated.AddUniqueDynamic(this, &UObjectListWidget::RefreshList);
+    // Правильная подписка: AddUniqueDynamic, не AddUObject
+    GS->OnObjectsUpdated.AddUniqueDynamic(this, &UObjectListWidget::RefreshList);
 
-        // Инициализируем список сразу
-        RefreshList(GS->GetAllObjectData());
-    }
+    // Инициализируем список сразу
+    RefreshList(GS->GetAllObjectData());
+
 }
 
 void UObjectListWidget::RefreshList(const TArray<FObjectData>& ObjectDataArray)
@@ -51,13 +49,16 @@ void UObjectListWidget::NativeConstruct()
         FinishSessionButton->OnClicked.AddDynamic(this, &UObjectListWidget::OnFinishClicked);
     }
 
+    GS = GetWorld()->GetGameState<AGS_GameStateBase>();
+
     InitializeWidget();
 }
 
 void UObjectListWidget::OnFinishClicked()
 {
-    if (ATestTaskGameMode* GM = GetWorld()->GetAuthGameMode<ATestTaskGameMode>())
-    {
-     //   GM->SaveCurrentObjectsToJson();
-    }
+    
+        GS->SaveObjectsToJson();
+
+        UKismetSystemLibrary::QuitGame(this, GetWorld()->GetFirstPlayerController(), EQuitPreference::Quit, false);
+    
 }

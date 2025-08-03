@@ -61,6 +61,8 @@ void ATestTaskCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	PC = Cast<APlayerController>(GetController());
+
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
@@ -91,6 +93,9 @@ void ATestTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		//Interact
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ATestTaskCharacter::Interact);
+
+		//Quit
+		EnhancedInputComponent->BindAction(QuitAction, ETriggerEvent::Triggered, this, &ATestTaskCharacter::Quit);
 
 	}
 	else
@@ -138,7 +143,7 @@ void ATestTaskCharacter::Look(const FInputActionValue& Value)
 void ATestTaskCharacter::Interact(const FInputActionValue& Value)
 {
 	FVector Start = GetActorLocation();
-	FVector End = Start + (GetActorForwardVector() * 500.0f); // adjust distance if needed
+	FVector End = Start + (FollowCamera->GetForwardVector() * FVector (1,1,0.25) *500.0f); // adjust distance if needed
 
 	// Draw debug line for visibility
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.0f, 0, 2.0f);
@@ -166,4 +171,17 @@ void ATestTaskCharacter::Interact(const FInputActionValue& Value)
         DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f, 0, 2.0f);
         UE_LOG(LogTemp, Warning, TEXT("Line trace did not hit anything."));
     }
+}
+
+void ATestTaskCharacter::Quit(const FInputActionValue& Value)
+{
+	if (bShowMouseCursor) {
+		PC->SetShowMouseCursor(true);
+		PC->SetInputMode(FInputModeGameAndUI());
+	}
+	else {
+		PC->SetShowMouseCursor(false);
+		PC->SetInputMode(FInputModeGameOnly());
+	}
+	bShowMouseCursor = !bShowMouseCursor;
 }

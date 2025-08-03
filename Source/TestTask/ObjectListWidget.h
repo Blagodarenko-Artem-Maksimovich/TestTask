@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "ObjectData.h"
+#include "GS_GameStateBase.h"
 #include "ObjectListWidget.generated.h"
 
 class UVerticalBox;
@@ -27,7 +28,12 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UButton* FinishSessionButton;
 
+    UPROPERTY()
+    AGS_GameStateBase* GS = nullptr;
+
     virtual void NativeConstruct() override;
+
+  
 
 private:
     UFUNCTION()

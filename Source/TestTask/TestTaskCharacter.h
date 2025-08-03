@@ -47,6 +47,13 @@ class ATestTaskCharacter : public ACharacter
 	/* Interact Input Action*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* QuitAction;
+
+	bool bShowMouseCursor = false;
+
+	APlayerController* PC;
 public:
 	ATestTaskCharacter();
 
@@ -61,6 +68,9 @@ protected:
 
 	/** Called for interact input */
 	void Interact(const FInputActionValue& Value);
+
+	/** Called for interact input */
+	void Quit(const FInputActionValue& Value);
 
 
 protected:

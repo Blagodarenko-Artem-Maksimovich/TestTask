@@ -1,25 +1,40 @@
 {
-  "objects": [
-    {
-      "id": 1,
-      "name": "Box1",
-      "position": { "X": 0.0, "Y": 0.0, "Z": 0.0 },
-      "color": "red",
-      "isActive": true
-    },
-    {
-      "id": 2,
-      "name": "Sphere1",
-      "position": { "X": 200.0, "Y": 0.0, "Z": 0.0 },
-      "color": "blue",
-      "isActive": false
-    },
-    {
-      "id": 3,
-      "name": "Cylinder1",
-      "position": { "X": -150.0, "Y": 50.0, "Z": 25.0 },
-      "color": "green",
-      "isActive": true
-    }
-  ]
-}
+			"objects": [
+				{
+					"id": 1,
+					"name": "Cube",
+					"position":
+					{
+						"x": 0,
+						"y": 0,
+						"z": 0
+					},
+					"colorName": "red",
+					"bIsActive": false
+				},
+				{
+					"id": 2,
+					"name": "Cone",
+					"position":
+					{
+						"x": 200,
+						"y": 0,
+						"z": 0
+					},
+					"colorName": "blue",
+					"bIsActive": false
+				},
+				{
+					"id": 3,
+					"name": "Plane",
+					"position":
+					{
+						"x": 300,
+						"y": 0,
+						"z": 0
+					},
+					"colorName": "blue",
+					"bIsActive": false
+				}
+			]
+		}
