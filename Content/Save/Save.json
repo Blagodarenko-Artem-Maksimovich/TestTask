@@ -1,0 +1,6 @@
+{
+    "objects": [
+        { "id": 1, "name": "Box1", "position": [0, 0, 0], "color": "red", "isActive": true },
+        { "id": 2, "name": "Sphere1", "position": [200, 0, 0], "color": "blue", "isActive": false }
+    ]
+}

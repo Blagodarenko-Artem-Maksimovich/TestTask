@@ -2,6 +2,7 @@
 
 #include "TestTaskGameMode.h"
 #include "TestTaskCharacter.h"
+#include "HUDBase.h"
 #include "GS_GameStateBase.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -13,5 +14,6 @@ ATestTaskGameMode::ATestTaskGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 		GameStateClass = AGS_GameStateBase::StaticClass();
+		HUDClass = AHUDBase::StaticClass();
 	}
 }

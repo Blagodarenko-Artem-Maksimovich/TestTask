@@ -6,7 +6,7 @@
 void AGS_GameStateBase::RegisterObject(FObjectData& ObjectData)
 {
 	ObjectDataArray.Add(ObjectData);
-    OnObjectsUpdated.Broadcast();
+    OnObjectsUpdated.Broadcast(ObjectDataArray);
 }
 
 const TArray<FObjectData>& AGS_GameStateBase::GetAllObjectData() const
@@ -21,7 +21,7 @@ void AGS_GameStateBase::UpdateObjectData(const FObjectData& NewData)
         if (Data.Id == NewData.Id)
         {
             Data = NewData;
-            OnObjectsUpdated.Broadcast();
+            OnObjectsUpdated.Broadcast(ObjectDataArray);
             return;
         }
     }

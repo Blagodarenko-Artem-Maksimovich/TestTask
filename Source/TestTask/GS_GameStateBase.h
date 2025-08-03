@@ -6,11 +6,11 @@
 #include "GameFramework/GameStateBase.h"
 #include "ObjectData.h"
 #include "GS_GameStateBase.generated.h"
-
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE(FOnObjectsUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnObjectsUpdated, const TArray<FObjectData>&, AllObjects);
+
 
 UCLASS()
 class TESTTASK_API AGS_GameStateBase : public AGameStateBase
@@ -27,6 +27,7 @@ public:
     // Обновить данные по ID
     void UpdateObjectData(const FObjectData& NewData);
 
+    UPROPERTY(BlueprintAssignable )
     FOnObjectsUpdated OnObjectsUpdated;
 
 protected:
