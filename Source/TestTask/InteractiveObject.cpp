@@ -1,5 +1,11 @@
 #include "InteractiveObject.h"
 #include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "UObject/ConstructorHelpers.h"
+
+TMap<FString, UStaticMesh*>       AInteractiveObject::NameToMeshMap;
+TMap<FString, FLinearColor>       AInteractiveObject::NameToColorMap;
+UMaterialInterface* AInteractiveObject::M_Dynamic = nullptr;
 
 AInteractiveObject::AInteractiveObject()
 {
@@ -24,6 +30,21 @@ MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
         NameToMeshMap.Add(TEXT("Plane"), Loader.Load(TEXT("/Game/StarterContent/Shapes/Shape_Plane")));
         NameToMeshMap.Add(TEXT("Box"), Loader.Load(TEXT("/Game/StarterContent/Shapes/Shape_Cube")));
     }
+    if (!M_Dynamic)
+    {
+        ConstructorHelpers::FObjectFinder<UMaterialInterface> Finder(TEXT("/Game/StarterContent/Materials/M_Dynamic.M_Dynamic"));
+        M_Dynamic = Finder.Succeeded() ? Finder.Object : nullptr;
+    }
+    // »нициализаци€ карты соответствий
+    NameToColorMap.Add(TEXT("red"), FLinearColor(255, 0, 0));
+    NameToColorMap.Add(TEXT("blue"), FLinearColor(0, 0, 255));
+    NameToColorMap.Add(TEXT("green"), FLinearColor(0, 255, 0));
+    NameToColorMap.Add(TEXT("white"), FLinearColor(255, 255, 255));
+    NameToColorMap.Add(TEXT("black"), FLinearColor(0, 0, 0));
+    NameToColorMap.Add(TEXT("yellow"), FLinearColor::Yellow);
+    NameToColorMap.Add(TEXT("gray"), FLinearColor::Gray);
+
+    NameToColorMap.GetKeys(Keys);
 }
 
 void AInteractiveObject::BeginPlay()
@@ -38,6 +59,17 @@ void AInteractiveObject::BeginPlay()
     }
 }
 
+void AInteractiveObject::UpdateMIDColor()
+{
+    if (!MI_Dynamic) {
+        return;
+    }
+
+    FLinearColor* Found = NameToColorMap.Find(ObjectData.ColorName.ToLower());
+    FLinearColor ColorToUse = Found ? *Found : FLinearColor::White;
+    MI_Dynamic->SetVectorParameterValue(TEXT("ColorParam"), ColorToUse);
+}
+
 void AInteractiveObject::Interact_Implementation()
 {
     ObjectData.bIsActive = !ObjectData.bIsActive;
@@ -45,17 +77,7 @@ void AInteractiveObject::Interact_Implementation()
     // Set material
     if (MeshComponent)
     {
-        if (ObjectData.bIsActive && ActiveMaterial)
-        {
-            MeshComponent->SetMaterial(0, ActiveMaterial);
-            ObjectData.ColorName= ActiveMaterial->GetName();
-        }
-        else if (!ObjectData.bIsActive && InactiveMaterial)
-        {
-            MeshComponent->SetMaterial(0, InactiveMaterial);
-            ObjectData.ColorName = InactiveMaterial->GetName();
-        }
-
+        SetColorByName(*GetRandomColor());
         GameState->UpdateObjectData(ObjectData);
     }
 }
@@ -80,6 +102,15 @@ bool AInteractiveObject::InitFromData(const FObjectData& InData)
             }
         }
     }
+    if (!ensure(M_Dynamic)) {
+        return false;
+    }
+    // —оздание единственного вывода динамического экземпл€ра
+    MI_Dynamic = UMaterialInstanceDynamic::Create(M_Dynamic, this);
+    MeshComponent->SetMaterial(0, MI_Dynamic);
+
+    UpdateMIDColor();
+    
 
     if (MeshToSet)
     {
@@ -92,9 +123,20 @@ bool AInteractiveObject::InitFromData(const FObjectData& InData)
         MeshComponent->SetStaticMesh(DefaultMesh);
         
     }
-
-    UMaterialInterface* Mat = ObjectData.bIsActive && ActiveMaterial ? ActiveMaterial : InactiveMaterial;
-    if (Mat)
-        MeshComponent->SetMaterial(0, Mat);
     return true;
+}
+
+void AInteractiveObject::SetColorByName(const FString& ColorName)
+{
+    ObjectData.ColorName = ColorName;
+    UpdateMIDColor();
+
+    // MiDynamic изменилс€ Ч обновл€ем модель в GameState
+    
+    GameState->UpdateObjectData(ObjectData);
+}
+
+FString AInteractiveObject::GetRandomColor()    {
+    
+    return *Keys[FMath::RandRange(0, Keys.Num() - 1)];
 }

@@ -35,7 +35,7 @@ public:
     UPROPERTY(BlueprintAssignable )
     FOnObjectsUpdated OnObjectsUpdated;
 
-    UFUNCTION(BlueprintCallable, Category = "Save?Load")
+    UFUNCTION(BlueprintCallable, Category = "Save/Load")
     void SaveObjectsToJson();
 
 protected:

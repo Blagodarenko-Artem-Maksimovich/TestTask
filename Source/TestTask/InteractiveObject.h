@@ -7,6 +7,7 @@
 #include "ObjectData.h"
 #include "InteractableInterface.h"
 #include "GS_GameStateBase.h"
+//#include "Materials/MaterialInstanceDynamic.h"
 #include "InteractiveObject.generated.h"
 
 UCLASS()
@@ -22,27 +23,37 @@ public:
     UPROPERTY(VisibleAnywhere)
     class UStaticMeshComponent* MeshComponent;
 
-    // Materials
-    UPROPERTY(EditDefaultsOnly, Category = "Materials")
-    UMaterialInterface* ActiveMaterial;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Materials")
-    UMaterialInterface* InactiveMaterial;
-
     UPROPERTY()
     AGS_GameStateBase* GameState = nullptr;
 
+    UPROPERTY(VisibleAnywhere)
+    UMaterialInstanceDynamic* MI_Dynamic;
+
+    static UMaterialInterface* M_Dynamic;
+
     UFUNCTION(BlueprintCallable)
     bool InitFromData(const FObjectData& InData);
+    
+    UFUNCTION(BlueprintCallable)
+    void SetColorByName(const FString& ColorName);
+
+    UFUNCTION(BlueprintCallable)
+    FString GetRandomColor();
 
     AInteractiveObject();
 
     virtual void Interact_Implementation();
 
+    TArray <FString> Keys;
+
 protected:
     virtual void BeginPlay() override;
 
 private:
-    TMap<FString, UStaticMesh*> NameToMeshMap ;
+    static TMap<FString, UStaticMesh*> NameToMeshMap ;
+
+    static TMap<FString, FLinearColor> NameToColorMap;
+
+    void UpdateMIDColor();
 
 };
