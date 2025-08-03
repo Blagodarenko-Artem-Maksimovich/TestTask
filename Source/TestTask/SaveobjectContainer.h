@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "ObjectData.h"
-#include "SaveObjectsContainer.generated.h"
+#include "SaveobjectContainer.generated.h"
+
 
 USTRUCT(BlueprintType)
 struct FSaveObjectsContainer
@@ -12,7 +13,7 @@ struct FSaveObjectsContainer
     GENERATED_BODY()
 
     UPROPERTY()
-    TArray<FObjectData> Objects;
+    TArray<FObjectData> objects;
 
     FSaveObjectsContainer() {}
 };
