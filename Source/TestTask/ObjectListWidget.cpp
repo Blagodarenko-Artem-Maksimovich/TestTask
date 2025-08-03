@@ -1,64 +1,105 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ObjectListWidget.h"
 #include "Components/VerticalBox.h"
 #include "Components/TextBlock.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
 #include "Blueprint/WidgetTree.h"
-#include "Kismet/GameplayStatics.h"
+#include "GS_GameStateBase.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "TestTaskGameMode.h"
-
-void UObjectListWidget::InitializeWidget()
-{
-    // Правильная подписка: AddUniqueDynamic, не AddUObject
-    GS->OnObjectsUpdated.AddUniqueDynamic(this, &UObjectListWidget::RefreshList);
-
-    // Инициализируем список сразу
-    RefreshList(GS->GetAllObjectData());
-
-}
-
-void UObjectListWidget::RefreshList(const TArray<FObjectData>& ObjectDataArray)
-{
-    ListBox->ClearChildren();
-
-    for (const FObjectData& Data : ObjectDataArray)
-    {
-        UBorder* Row = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-
-        FString Status = Data.bIsActive ? TEXT("Active") : TEXT("Inactive");
-        FString RowText = FString::Printf(TEXT("Name: %s   Colour: %s   [%s]"), *Data.Name, *Data.ColorName, *Status);
-        Text->SetText(FText::FromString(RowText));
-        Row->SetBrushColor(FLinearColor::Black);
-        Row->SetPadding(FMargin(5));
-        Row->AddChild(Text);
-        ListBox->AddChild(Row);
-    }
-}
 
 void UObjectListWidget::NativeConstruct()
 {
-    Super::NativeConstruct();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+    Super::NativeConstruct();
+
+    GS = GetWorld() ? GetWorld()->GetGameState<AGS_GameStateBase>() : nullptr;
+
+    if (!ensure(GS != nullptr))
+    {
+        UE_LOG(LogTemp, Error, TEXT("UObjectListWidget::NativeConstruct failed to get GameState"));
+        return;
+    }
 
     if (FinishSessionButton)
     {
-        FinishSessionButton->OnClicked.AddDynamic(this, &UObjectListWidget::OnFinishClicked);
+        FinishSessionButton->OnClicked.AddUniqueDynamic(this, &UObjectListWidget::OnFinishClicked);
     }
-
-    GS = GetWorld()->GetGameState<AGS_GameStateBase>();
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnFinishClicked: FinishSessionButton not bound"));
+    }
 
     InitializeWidget();
 }
 
+void UObjectListWidget::InitializeWidget()
+{
+    if (!ensure(GS))
+    {
+        return;
+    }
+
+    // Bind to the multicast delegate to update UI on data change
+    GS->OnObjectsUpdated.AddUniqueDynamic(this, &UObjectListWidget::RefreshList);
+
+    // Initial population
+    RefreshList(GS->GetAllObjectData());
+}
+
+void UObjectListWidget::RefreshList(const TArray<FObjectData>& ObjectDataArray)
+{
+    if (!ensure(ListBox))
+    {
+        return;
+    }
+
+    ListBox->ClearChildren();
+
+    for (const FObjectData& Data : ObjectDataArray)
+    {
+        // border: row container
+        UBorder* Row = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+        // text: row label
+        UTextBlock* TextBlock = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+
+        if (Row && TextBlock)
+        {
+            const FString Status = Data.bIsActive ? TEXT("Active") : TEXT("Inactive");
+            const FString Label = FString::Printf(
+                TEXT("Name: %s   Color: %s   [%s]"), *Data.Name, *Data.ColorName, *Status);
+
+            TextBlock->SetText(FText::FromString(Label));
+
+            Row->SetBrushColor(FLinearColor::Black);
+            Row->SetPadding(FMargin(5.0f));
+            Row->AddChild(TextBlock);
+
+            ListBox->AddChild(Row);
+        }
+    }
+}
+
 void UObjectListWidget::OnFinishClicked()
 {
-    
+    if (GS)
+    {
         GS->SaveObjectsToJson();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnFinishClicked: GameState is null"));
+    }
 
-        UKismetSystemLibrary::QuitGame(this, GetWorld()->GetFirstPlayerController(), EQuitPreference::Quit, false);
-    
+    APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+
+    if (PC)
+    {
+        UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, false);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OnFinishClicked: PlayerController is null"));
+    }
 }
+
+
+

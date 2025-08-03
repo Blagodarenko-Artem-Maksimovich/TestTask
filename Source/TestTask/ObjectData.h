@@ -1,40 +1,69 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "ObjectData.generated.h"
 
 /**
- * struct object data
+ * FObjectData is the Model struct representing the state of an object in the scene.
+ * 
+ * This struct is serialized to/from JSON via JsonUtilities. The property names are designed
+ * to match exactly the keys used in the JSON schema:
+ *
+ * {
+ *   "id": 1,
+ *   "name": "Box1",
+ *   "position": { "X": 0.0, "Y": 0.0, "Z": 0.0 },
+ *   "colorName": "red",
+ *   "isActive": true
+ * }
+ *
+ * BlueprintType allows using this struct in UMG/Blueprints if needed.
  */
-
 USTRUCT(BlueprintType)
-struct FObjectData
+struct TESTTASK_API FObjectData
 {
     GENERATED_BODY()
 
-    // Object id
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Data")
-    int32 Id;
+    /** Unique object identifier (must be stable between sessions) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveLoad|Data")
+    int32 Id = 0;
 
-    // Object name
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Data")
-    FString Name;
+    /** Object name, used to identify mesh type and dictionary lookups */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveLoad|Data")
+    FString Name = TEXT("Unknown");
 
-    // Object world position
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Data")
-    FVector Position;
+    /** World position; serialized as an object { "X": ..., "Y": ..., "Z": ... } */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveLoad|Data")
+    FVector Position = FVector::ZeroVector;
 
-    // Object color
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Data")
-    FString ColorName;
+    /** String key representing color; must match NameToColorMap keys (case-insensitive) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveLoad|Data")
+    FString ColorName = TEXT("white");
 
-    // Object is active ?
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Data")
-    bool bIsActive;
+    /** Whether the object is active (true) or inactive (false) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveLoad|Data")
+    bool bIsActive = true;
 
-    FObjectData()
-        : Id(0), Name(TEXT("Unknown")), Position(FVector::ZeroVector), ColorName(TEXT("White")), bIsActive(true)
-    {}
+    // Default constructor is auto-generated; all defaults are set above.
+
+    /**
+     * Equality operator, useful for debugging or unit tests.
+     * Compares all fields; position uses FVector::Equals with default tolerance.
+     */
+    bool operator==(const FObjectData& Other) const
+    {
+        return (Id == Other.Id)
+            && (Name == Other.Name)
+            && Position.Equals(Other.Position)
+            && (ColorName == Other.ColorName)
+            && (bIsActive == Other.bIsActive);
+    }
+
+    /**
+     * REQUIRED for JsonObjectConverter: map "colorName" key (not "color"), matching JSON schema.
+     * If you later rename ColorName field, update the JSON or supply custom mappings to JsonObjectConverter.
+     */
 };
+
+
+

@@ -8,134 +8,130 @@
 #include "Misc/Paths.h"
 #include "InteractiveObject.h"
 
-void AGS_GameStateBase::RegisterObject(FObjectData& ObjectData)
-{
-	ObjectDataArray.Add(ObjectData);
-    OnObjectsUpdated.Broadcast(ObjectDataArray);
-}
-
-const TArray<FObjectData>& AGS_GameStateBase::GetAllObjectData() const
-{
-	return ObjectDataArray;
-}
-
-void AGS_GameStateBase::UpdateObjectData(const FObjectData& NewData)
-{
-    for (FObjectData& Data : ObjectDataArray)
-    {
-        if (Data.Id == NewData.Id)
-        {
-            Data = NewData;
-            OnObjectsUpdated.Broadcast(ObjectDataArray);
-            return;
-        }
-    }
-}
-
-void AGS_GameStateBase::LoadObjectsFromJson()
-{
-    const FString FullPath = FPaths::ProjectDir() / TEXT("Content/Save/Save.json");
-    if (!FPaths::FileExists(FullPath))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("JSON load file not found: %s"), *FullPath);
-        return;
-    }
-
-   FString JsonString;
-    if (!FFileHelper::LoadFileToString(JsonString, *FullPath))
-    {
-        UE_LOG(LogTemp, Warning,
-            TEXT("LoadObjectsFromJson: File not found or unreadable: %s"), *FullPath);
-        return;
-    }
-
-    FSaveObjectsContainer Container;
-    FText ErrorMsg;
-
-    const bool bSuccess = FJsonObjectConverter::JsonObjectStringToUStruct(JsonString, &Container, 0, 0, true);
-
-    if (!bSuccess)
-    {
-        UE_LOG(LogTemp, Error,
-            TEXT("LoadObjectsFromJson: JSON parsing failed: %s"), *ErrorMsg.ToString());
-        return;
-    }
-
-    // Удалили старые данные перед загрузкой
-    ObjectDataArray.Empty();
-
-    // Сразу уведомляем подписчиков — UI очистится
-    OnObjectsUpdated.Broadcast(ObjectDataArray);
-
-    // Зарегистрировать каждый объект (дерайвинг-загрузка структуры)
-    for (FObjectData& Obj : Container.objects)
-    {
-        AInteractiveObject* NewObject = GetWorld()->SpawnActor<AInteractiveObject>(AInteractiveObject::StaticClass());
-        if (NewObject->InitFromData(Obj)) {
-            RegisterObject(Obj);
-        }
-        else {
-            NewObject->Destroy();
-        }
-    }
-
-    UE_LOG(LogTemp, Log,
-        TEXT("LoadObjectsFromJson: Loaded and registered %d objects"), ObjectDataArray.Num());
-}
-
-void AGS_GameStateBase::SaveObjectsToJson()
-{
-    FSaveObjectsContainer Container;
-    Container.objects = ObjectDataArray;
-
-    FString OutString;
-    bool bOk = FJsonObjectConverter::UStructToJsonObjectString(
-        FSaveObjectsContainer::StaticStruct(),
-        &Container,
-        OutString,
-        /*CheckFlags=*/0, /*SkipFlags=*/0,
-        /*Indent=*/2,
-        /*ExportCb=*/nullptr,
-        /*bPrettyPrint=*/true
-    );
-
-    if (!bOk)
-    {
-        UE_LOG(LogTemp, Error, TEXT("SaveObjectsToJson: UStruct->JSON conversion failed"));
-        return;
-    }
-
-    const FString SaveDir = FPaths::ProjectDir();
-    const FString Filename = TEXT("Content/Save/Save.json");
-    const FString FullPath = SaveDir / Filename;
-
-    IPlatformFile& PF = FPlatformFileManager::Get().GetPlatformFile();
-    if (!PF.DirectoryExists(*SaveDir))
-    {
-        PF.CreateDirectoryTree(*SaveDir);
-    }
-
-    bool bSaved = FFileHelper::SaveStringToFile(
-        OutString,
-        *FullPath,
-        FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM,
-        &IFileManager::Get(),
-        FILEWRITE_None
-    );
-
-    if (bSaved)
-    {
-        UE_LOG(LogTemp, Log, TEXT("Successfully saved JSON to %s"), *FullPath);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Failed to save JSON to %s"), *FullPath);
-    }
-}
+// Define the save/load path once (Saved/SessionSave/SessionSave.json)
+const FString AGS_GameStateBase::SessionFilePath = TEXT("SessionSave/SessionSave.json");
 
 void AGS_GameStateBase::BeginPlay()
 {
     Super::BeginPlay();
-
+    // Load initial state from JSON
     LoadObjectsFromJson();
 }
+
+void AGS_GameStateBase::RegisterObject(const FObjectData& NewData)
+{
+    ObjectDataArray.Add(NewData);
+    // Notify any UI subscribers
+    OnObjectsUpdated.Broadcast(ObjectDataArray);
+}
+
+void AGS_GameStateBase::UpdateObjectData(const FObjectData& UpdatedData)
+{
+    for (FObjectData& Entry : ObjectDataArray)
+    {
+        if (Entry.Id == UpdatedData.Id)
+        {
+            Entry = UpdatedData;
+            OnObjectsUpdated.Broadcast(ObjectDataArray);
+            return;
+        }
+    }
+    UE_LOG(LogTemp, Warning, TEXT("UpdateObjectData: ID %d not found"), UpdatedData.Id);
+}
+
+void AGS_GameStateBase::LoadObjectsFromJson()
+{
+    // Full path in Saved/SessionSave/SessionSave.json
+    const FString FullPath = FPaths::ProjectSavedDir() / SessionFilePath;
+
+    // Early out if missing
+    if (!FPaths::FileExists(FullPath))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("LoadObjectsFromJson: File not found: %s"), *FullPath);
+        return;
+    }
+
+    FString JsonContent;
+    if (!FFileHelper::LoadFileToString(JsonContent, *FullPath))
+    {
+        UE_LOG(LogTemp, Error, TEXT("LoadObjectsFromJson: Unable to read file: %s"), *FullPath);
+        return;
+    }
+
+    // Deserialize into container struct
+    FSaveObjectsContainer Container;
+    FText Error;
+    const bool bParsed = FJsonObjectConverter::JsonObjectStringToUStruct(JsonContent, &Container, 0, 0, /*bStrict=*/ true);
+
+    if (!bParsed)
+    {
+        UE_LOG(LogTemp, Error, TEXT("LoadObjectsFromJson: JSON parse failed: %s"), *Error.ToString());
+        return;
+    }
+
+    // Clear old state and notify UI (empty list)
+    ObjectDataArray.Empty();
+    OnObjectsUpdated.Broadcast(ObjectDataArray);
+
+    // Spawn and init each actor, register if successful
+    for (const FObjectData& Data : Container.objects)
+    {
+        if (UWorld* World = GetWorld())
+        {
+            AInteractiveObject* Obj = World->SpawnActor<AInteractiveObject>(AInteractiveObject::StaticClass());
+            if (Obj && Obj->InitFromData(Data))
+            {
+                RegisterObject(Data);
+            }
+            else if (Obj)
+            {
+                Obj->Destroy();
+            }
+        }
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("LoadObjectsFromJson: Registered %d objects"), ObjectDataArray.Num());
+}
+
+void AGS_GameStateBase::SaveObjectsToJson()
+{
+    // Prepare container with current model
+    FSaveObjectsContainer Container;
+    Container.objects = ObjectDataArray;
+
+    // Serialize with pretty-print
+    FString OutJson;
+    const bool bConverted = FJsonObjectConverter::UStructToJsonObjectString(
+        FSaveObjectsContainer::StaticStruct(),
+        &Container,
+        OutJson,
+        /*CheckFlags*/0, /*SkipFlags*/0,
+        /*Indent=*/2, nullptr, /*bPrettyPrint=*/true);
+
+    if (!bConverted)
+    {
+        UE_LOG(LogTemp, Error, TEXT("SaveObjectsToJson: Struct->JSON conversion failed"));
+        return;
+    }
+
+    // Ensure directory exists
+    const FString FullPath = FPaths::ProjectSavedDir() / SessionFilePath;
+    IPlatformFile& PF = FPlatformFileManager::Get().GetPlatformFile();
+    PF.CreateDirectoryTree(*FPaths::GetPath(FullPath));
+
+    // Write out
+    if (FFileHelper::SaveStringToFile(
+        OutJson,
+        *FullPath,
+        FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+    {
+        UE_LOG(LogTemp, Log, TEXT("SaveObjectsToJson: Saved to %s"), *FullPath);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("SaveObjectsToJson: Failed to save to %s"), *FullPath);
+    }
+}
+
+
+

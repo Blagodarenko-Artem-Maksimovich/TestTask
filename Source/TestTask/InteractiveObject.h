@@ -33,7 +33,7 @@ public:
 
     UFUNCTION(BlueprintCallable)
     bool InitFromData(const FObjectData& InData);
-    
+
     UFUNCTION(BlueprintCallable)
     void SetColorByName(const FString& ColorName);
 
@@ -50,10 +50,15 @@ protected:
     virtual void BeginPlay() override;
 
 private:
-    static TMap<FString, UStaticMesh*> NameToMeshMap ;
+    static TMap<FString, UStaticMesh*> NameToMeshMap;
 
     static TMap<FString, FLinearColor> NameToColorMap;
 
     void UpdateMIDColor();
 
 };
+
+
+
+
+

@@ -1,19 +1,30 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "ObjectData.h"
-#include "SaveobjectContainer.generated.h"
+#include "SaveobjectContainer.generated.h" // This include must be last
 
-
+/**
+ * Container struct for serializing and deserializing an array of FObjectData.
+ * Used by JsonObjectConverter to wrap the array in a top-level "objects" key.
+ *
+ * Matches JSON schema:
+ * {
+ *    "objects": [ ... ]
+ * }
+ */
 USTRUCT(BlueprintType)
-struct FSaveObjectsContainer
+struct TESTTASK_API FSaveObjectsContainer
 {
     GENERATED_BODY()
 
-    UPROPERTY()
+    /** Array of object states (Model) to be saved or loaded */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveLoad")
     TArray<FObjectData> objects;
 
-    FSaveObjectsContainer() {}
+    /** Default constructor */
+    FSaveObjectsContainer() = default;
 };
+
+
+
